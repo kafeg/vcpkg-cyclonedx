@@ -41,11 +41,18 @@ def find_mapping_entry(mapping: dict, pkg_name: str) -> Tuple[Optional[dict], Op
     return None, None
 
 
-def render_template(template: str, pkg_name: str, pkg_version: str) -> str:
+def render_template(
+    template: str,
+    pkg_name: str,
+    pkg_version: str,
+    *,
+    port_override: Optional[str] = None,
+) -> str:
+    port_value = pkg_name if port_override is None else port_override
     return (
         template
         .replace("{version}", pkg_version)
-        .replace("{port}", pkg_name)
+        .replace("{port}", port_value)
     )
 
 
@@ -112,19 +119,20 @@ def render_cpe_value(
     pkg_version: str,
     matched_pattern: Optional[str],
     cpedict_by_vendor: Dict[str, Dict[str, str]],
-) -> str:
+) -> Tuple[str, Optional[str]]:
     if not template:
-        return ""
+        return "", None
 
     parts = template.split(":")
     if len(parts) != 13:
-        return render_template(template, pkg_name, pkg_version)
+        return render_template(template, pkg_name, pkg_version), None
 
     vendor_template = parts[3]
     product_template = parts[4]
 
     vendor_value = render_template(vendor_template, pkg_name, pkg_version).strip()
     adjusted_product_template = product_template
+    canonical_product: Optional[str] = None
 
     if "{port}" in product_template:
         canonical_product = choose_cpe_product(
@@ -143,7 +151,7 @@ def render_cpe_value(
             continue
         parts[idx] = render_template(value, pkg_name, pkg_version).strip()
 
-    return ":".join(parts)
+    return ":".join(parts), canonical_product
 
 
 def load_cpedict_index(
@@ -392,14 +400,21 @@ def build_sbom(
                     errors.append(f"Port {pkg_name} ({pkg_version}) missing in mapping.json")
                 continue
 
-        cpe_value = render_cpe_value(
+        cpe_value, canonical_product = render_cpe_value(
             m.get("cpe", ""),
             pkg_name,
             pkg_version,
             matched_pattern,
             cpedict_by_vendor,
+        )
+        cpe_value = cpe_value.strip()
+        port_override = canonical_product if canonical_product else None
+        purl_value = render_template(
+            m.get("purl", ""),
+            pkg_name,
+            pkg_version,
+            port_override=port_override,
         ).strip()
-        purl_value = render_template(m.get("purl", ""), pkg_name, pkg_version).strip()
 
         if not cpe_value or not purl_value:
             errors.append(f"Port {pkg_name} has incomplete mapping")
