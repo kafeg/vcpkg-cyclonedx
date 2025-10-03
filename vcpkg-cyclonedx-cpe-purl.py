@@ -4,12 +4,13 @@ import json
 import sys
 from fnmatch import fnmatch
 from pathlib import Path
+from typing import Optional
 
 from cyclonedx.model.bom import Bom
 from cyclonedx.model.component import Component, ComponentType
-from cyclonedx.model import ExternalReference, ExternalReferenceType
 from cyclonedx.output import OutputFormat, make_outputter
 from cyclonedx.schema import SchemaVersion
+from packageurl import PackageURL
 
 
 def load_mapping(path: Path) -> dict:
@@ -43,6 +44,19 @@ def render_template(template: str, pkg_name: str, pkg_version: str) -> str:
     )
 
 
+def extract_port_package(spdx_doc: dict) -> Optional[dict]:
+    packages = spdx_doc.get("packages")
+    if not isinstance(packages, list):
+        return None
+
+    for package in packages:
+        spdx_id = package.get("SPDXID") or package.get("spdxId")
+        if isinstance(spdx_id, str) and spdx_id.lower() == "spdxref-port":
+            return package
+
+    return None
+
+
 def build_sbom(installed_root: Path, mapping_file: Path):
     mapping = load_mapping(mapping_file)
     spdx_files = collect_spdx_files(installed_root)
@@ -58,36 +72,59 @@ def build_sbom(installed_root: Path, mapping_file: Path):
         with spdx_file.open("r", encoding="utf-8") as f:
             spdx = json.load(f)
 
-        pkg_name = spdx.get("name")
-        pkg_version = spdx.get("versionInfo")
-
-        if not pkg_name or not pkg_version:
-            errors.append(f"{spdx_file}: missing name/version")
+        port_package = extract_port_package(spdx)
+        if not port_package:
+            errors.append(f"{spdx_file}: missing port package definition")
             continue
 
-        m = find_mapping_entry(mapping, pkg_name)
+        pkg_name_raw = port_package.get("name")
+        pkg_version = port_package.get("versionInfo")
+
+        if isinstance(pkg_name_raw, str):
+            pkg_name = pkg_name_raw.strip()
+            lookup_name = pkg_name.lower()
+        else:
+            pkg_name = None
+            lookup_name = None
+
+        if not pkg_name:
+            errors.append(f"{spdx_file}: missing port name (SPDXRef-port)")
+            continue
+
+        if not pkg_version and isinstance(spdx.get("name"), str):
+            doc_name = spdx["name"].split("@", 1)
+            if len(doc_name) == 2:
+                pkg_version = doc_name[1].split()[0]
+
+        if not pkg_version:
+            errors.append(f"{spdx_file}: missing version (SPDXRef-port)")
+            continue
+
+        mapping_name = lookup_name or pkg_name
+        m = find_mapping_entry(mapping, mapping_name)
         if not m:
-            errors.append(f"Port {pkg_name} missing in mapping.json")
+            errors.append(f"Port {pkg_name} ({pkg_version}) missing in mapping.json")
             continue
 
-        cpe = render_template(m.get("cpe", ""), pkg_name, pkg_version)
-        purl = render_template(m.get("purl", ""), pkg_name, pkg_version)
+        cpe_value = render_template(m.get("cpe", ""), pkg_name, pkg_version).strip()
+        purl_value = render_template(m.get("purl", ""), pkg_name, pkg_version).strip()
 
-        if not cpe or not purl:
+        if not cpe_value or not purl_value:
             errors.append(f"Port {pkg_name} has incomplete mapping")
+            continue
+
+        try:
+            purl_obj = PackageURL.from_string(purl_value)
+        except ValueError:
+            errors.append(f"{spdx_file}: invalid purl '{purl_value}'")
             continue
 
         comp = Component(
             name=pkg_name,
             version=pkg_version,
             type=ComponentType.LIBRARY,
-            purl=purl
-        )
-        comp.external_references.add(
-            ExternalReference(
-                reference_type=ExternalReferenceType.SECURITY,
-                url=cpe  # CycloneDX lib требует url, но можно указать CPE строкой
-            )
+            purl=purl_obj,
+            cpe=cpe_value
         )
 
         bom.components.add(comp)
