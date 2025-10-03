@@ -30,15 +30,15 @@ def collect_spdx_files(installed_root: Path):
     return list(installed_root.glob("**/share/*/vcpkg.spdx.json"))
 
 
-def find_mapping_entry(mapping: dict, pkg_name: str):
+def find_mapping_entry(mapping: dict, pkg_name: str) -> Tuple[Optional[dict], Optional[str]]:
     if pkg_name in mapping:
-        return mapping[pkg_name]
+        return mapping[pkg_name], pkg_name
     for pattern, entry in mapping.items():
         if pattern == pkg_name:
-            return entry
+            return entry, pattern
         if any(ch in pattern for ch in "*?[") and fnmatch(pkg_name, pattern):
-            return entry
-    return None
+            return entry, pattern
+    return None, None
 
 
 def render_template(template: str, pkg_name: str, pkg_version: str) -> str:
@@ -49,12 +49,116 @@ def render_template(template: str, pkg_name: str, pkg_version: str) -> str:
     )
 
 
-def load_cpedict_index(csv_path: Path) -> Tuple[List[Tuple[str, str]], Dict[str, List[Tuple[str, str]]]]:
+def pattern_has_wildcard(pattern: Optional[str]) -> bool:
+    if not pattern:
+        return False
+    return any(ch in pattern for ch in "*?[")
+
+
+def extract_wildcard_prefix(pattern: str) -> str:
+    if not pattern:
+        return ""
+    prefix_chars: List[str] = []
+    for ch in pattern:
+        if ch in "*?[":
+            break
+        prefix_chars.append(ch)
+    if not prefix_chars:
+        return ""
+    prefix = "".join(prefix_chars).rstrip("-_ .")
+    return prefix.lower()
+
+
+def choose_cpe_product(
+    port_name: str,
+    vendor_value: str,
+    matched_pattern: Optional[str],
+    cpedict_by_vendor: Dict[str, Dict[str, str]],
+) -> str:
+    if not vendor_value:
+        return port_name
+
+    vendor_products = cpedict_by_vendor.get(vendor_value.lower())
+    if not vendor_products:
+        return port_name
+
+    port_lower = port_name.lower()
+    if port_lower in vendor_products:
+        return vendor_products[port_lower]
+
+    normalized = port_lower.replace("-", "_")
+    if normalized in vendor_products:
+        return vendor_products[normalized]
+
+    candidates: List[str] = []
+
+    if pattern_has_wildcard(matched_pattern):
+        prefix = extract_wildcard_prefix(matched_pattern or "")
+        if prefix:
+            candidates.append(prefix)
+
+    candidates.append(vendor_value.lower())
+
+    for candidate in candidates:
+        if candidate in vendor_products:
+            return vendor_products[candidate]
+
+    return port_name
+
+
+def render_cpe_value(
+    template: str,
+    pkg_name: str,
+    pkg_version: str,
+    matched_pattern: Optional[str],
+    cpedict_by_vendor: Dict[str, Dict[str, str]],
+) -> str:
+    if not template:
+        return ""
+
+    parts = template.split(":")
+    if len(parts) != 13:
+        return render_template(template, pkg_name, pkg_version)
+
+    vendor_template = parts[3]
+    product_template = parts[4]
+
+    vendor_value = render_template(vendor_template, pkg_name, pkg_version).strip()
+    adjusted_product_template = product_template
+
+    if "{port}" in product_template:
+        canonical_product = choose_cpe_product(
+            pkg_name,
+            vendor_value,
+            matched_pattern,
+            cpedict_by_vendor,
+        )
+        adjusted_product_template = product_template.replace("{port}", canonical_product)
+
+    parts[3] = vendor_value
+    parts[4] = render_template(adjusted_product_template, pkg_name, pkg_version).strip()
+
+    for idx, value in enumerate(parts):
+        if idx in (3, 4):
+            continue
+        parts[idx] = render_template(value, pkg_name, pkg_version).strip()
+
+    return ":".join(parts)
+
+
+def load_cpedict_index(
+    csv_path: Path,
+) -> Tuple[
+    List[Tuple[str, str]],
+    Dict[str, List[Tuple[str, str]]],
+    Dict[str, Dict[str, str]],
+]:
     entries: List[Tuple[str, str]] = []
     by_product: Dict[str, List[Tuple[str, str]]] = defaultdict(list)
+    by_vendor: Dict[str, Dict[str, str]] = defaultdict(dict)
 
     if not csv_path.exists():
-        return entries, by_product
+        return entries, by_product, by_vendor
 
     with csv_path.open("r", encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
@@ -65,9 +169,13 @@ def load_cpedict_index(csv_path: Path) -> Tuple[List[Tuple[str, str]], Dict[str,
                 continue
             entry = (vendor, product)
             entries.append(entry)
-            by_product[product.lower()].append(entry)
+            product_lower = product.lower()
+            vendor_lower = vendor.lower()
+            by_product[product_lower].append(entry)
+            # Track canonical case for quick vendor/product lookups
+            by_vendor[vendor_lower][product_lower] = product
 
-    return entries, by_product
+    return entries, by_product, by_vendor
 
 
 def suggest_cpe_candidates(
@@ -224,7 +332,7 @@ def build_sbom(
     bom = Bom()
     errors = []
     skipped = []
-    cpedict_entries, cpedict_by_product = load_cpedict_index(CPEDICT_CSV_PATH)
+    cpedict_entries, cpedict_by_product, cpedict_by_vendor = load_cpedict_index(CPEDICT_CSV_PATH)
     mapping_dirty = False
 
     for spdx_file in spdx_files:
@@ -261,7 +369,7 @@ def build_sbom(
 
         mapping_key = pkg_name.lower()
         mapping_name = lookup_name or pkg_name
-        m = find_mapping_entry(mapping, mapping_name)
+        m, matched_pattern = find_mapping_entry(mapping, mapping_name)
         if not m:
             suggestions = suggest_cpe_candidates(pkg_name, cpedict_entries, cpedict_by_product)
             if edit_mapping:
@@ -269,6 +377,7 @@ def build_sbom(
                 if entry:
                     mapping[mapping_key] = entry
                     m = entry
+                    matched_pattern = mapping_key
                     mapping_dirty = True
             if not m:
                 if skip_missing:
@@ -283,7 +392,13 @@ def build_sbom(
                     errors.append(f"Port {pkg_name} ({pkg_version}) missing in mapping.json")
                 continue
 
-        cpe_value = render_template(m.get("cpe", ""), pkg_name, pkg_version).strip()
+        cpe_value = render_cpe_value(
+            m.get("cpe", ""),
+            pkg_name,
+            pkg_version,
+            matched_pattern,
+            cpedict_by_vendor,
+        ).strip()
         purl_value = render_template(m.get("purl", ""), pkg_name, pkg_version).strip()
 
         if not cpe_value or not purl_value:
