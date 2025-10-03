@@ -2,6 +2,7 @@
 import argparse
 import csv
 import json
+import re
 import sys
 from collections import defaultdict
 from fnmatch import fnmatch
@@ -10,6 +11,7 @@ from typing import Dict, List, Optional, Tuple
 
 from cyclonedx.model.bom import Bom
 from cyclonedx.model.component import Component, ComponentType
+from cyclonedx.model.license import DisjunctiveLicense, LicenseExpression
 from cyclonedx.output import OutputFormat, make_outputter
 from cyclonedx.schema import SchemaVersion
 from packageurl import PackageURL
@@ -122,6 +124,55 @@ def strip_port_version(version: str) -> str:
     if split_index == -1:
         return version
     return version[:split_index]
+
+
+def extract_license_expression(port_package: dict) -> Optional[str]:
+    def normalize(value: Optional[str]) -> Optional[str]:
+        if not isinstance(value, str):
+            return None
+        text = value.strip()
+        if not text:
+            return None
+        upper = text.upper()
+        if upper in {"NOASSERTION", "NONE"}:
+            return None
+        return text
+
+    license_expr = normalize(port_package.get("licenseConcluded"))
+    if license_expr:
+        return license_expr
+
+    license_expr = normalize(port_package.get("licenseDeclared"))
+    if license_expr:
+        return license_expr
+
+    from_files = port_package.get("licenseInfoFromFiles")
+    if isinstance(from_files, list):
+        for entry in from_files:
+            license_expr = normalize(entry)
+            if license_expr:
+                return license_expr
+
+    return None
+
+
+LICENSE_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.+-]*(?:-[A-Za-z0-9.+-]+)*$")
+
+
+def build_license_choices(license_expression: Optional[str]):
+    if not license_expression:
+        return None
+
+    if LICENSE_ID_PATTERN.match(license_expression):
+        try:
+            return [DisjunctiveLicense(name=license_expression)]
+        except Exception:
+            return None
+
+    try:
+        return [LicenseExpression(license_expression)]
+    except ValueError:
+        return None
 
 
 def render_cpe_value(
@@ -449,12 +500,25 @@ def build_sbom(
             errors.append(f"{spdx_file}: invalid purl '{purl_value}'")
             continue
 
+        license_expression = extract_license_expression(port_package)
+        licenses_arg = build_license_choices(license_expression)
+
+        description_value = port_package.get("description")
+        if isinstance(description_value, str):
+            description_value = description_value.strip()
+            if not description_value:
+                description_value = None
+        else:
+            description_value = None
+
         comp = Component(
             name=pkg_name,
             version=upstream_version,
             type=ComponentType.LIBRARY,
             purl=purl_obj,
-            cpe=cpe_value
+            cpe=cpe_value,
+            licenses=licenses_arg,
+            description=description_value,
         )
 
         bom.components.add(comp)
