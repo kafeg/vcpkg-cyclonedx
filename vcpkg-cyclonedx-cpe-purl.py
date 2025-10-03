@@ -116,6 +116,85 @@ def suggest_cpe_candidates(
     return suggestions
 
 
+def create_mapping_entry(vendor: str, product: str, purl_template: str = "pkg:generic/{port}@{version}") -> dict:
+    vendor_clean = vendor.strip().lower()
+    product_clean = product.strip().lower()
+    if not vendor_clean or not product_clean:
+        raise ValueError("Vendor and product must be provided for mapping entry")
+
+    cpe_template = f"cpe:2.3:a:{vendor_clean}:{product_clean}:{{version}}:*:*:*:*:*:*:*"
+    return {
+        "cpe": cpe_template,
+        "purl": purl_template.strip() or "pkg:generic/{port}@{version}"
+    }
+
+
+def interactive_add_mapping(
+    pkg_name: str,
+    pkg_version: str,
+    suggestions: List[Tuple[str, str]],
+) -> Optional[dict]:
+    print(f"[EDIT] Port {pkg_name} ({pkg_version}) missing in mapping.json.")
+
+    if suggestions:
+        print("[EDIT] Suggested CPE vendor/product pairs:")
+        for idx, (vendor, product) in enumerate(suggestions, start=1):
+            print(f"  {idx}) {vendor}/{product}")
+    else:
+        print("[EDIT] No suggestions found in cpedict.")
+
+    default_purl = "pkg:generic/{port}@{version}"
+    prompt = "Select option number or enter command ([s]kip, [c]ustom, [q]uit): "
+
+    while True:
+        try:
+            choice = input(prompt).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("\n[ERROR] Aborting by user request.")
+            sys.exit(1)
+
+        if choice in {"", "s", "skip"}:
+            print(f"[INFO] Skipping mapping for {pkg_name}.")
+            return None
+
+        if choice in {"q", "quit", "exit"}:
+            print("[ERROR] Aborting by user request.")
+            sys.exit(1)
+
+        if choice in {"c", "custom"}:
+            vendor = input("  Vendor (CPE party): ").strip()
+            product = input("  Product (CPE component): ").strip()
+            if not vendor or not product:
+                print("[WARN] Vendor and product cannot be empty. Try again.")
+                continue
+            purl_template = input(f"  PURL template [{default_purl}]: ").strip() or default_purl
+            try:
+                entry = create_mapping_entry(vendor, product, purl_template)
+            except ValueError as exc:
+                print(f"[WARN] {exc}. Try again.")
+                continue
+            print(f"[OK] Added custom mapping {vendor}/{product} for {pkg_name}.")
+            return entry
+
+        if choice.isdigit():
+            index = int(choice)
+            if 1 <= index <= len(suggestions):
+                vendor, product = suggestions[index - 1]
+                entry = create_mapping_entry(vendor, product)
+                print(f"[OK] Selected mapping {vendor}/{product} for {pkg_name}.")
+                return entry
+            print("[WARN] Invalid option number. Try again.")
+            continue
+
+        print("[WARN] Unrecognized input. Provide a number, 'c' for custom, 's' to skip, or 'q' to quit.")
+
+
+def save_mapping(path: Path, mapping: dict):
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(mapping, handle, indent=2)
+        handle.write("\n")
+
+
 def extract_port_package(spdx_doc: dict) -> Optional[dict]:
     packages = spdx_doc.get("packages")
     if not isinstance(packages, list):
@@ -129,7 +208,7 @@ def extract_port_package(spdx_doc: dict) -> Optional[dict]:
     return None
 
 
-def build_sbom(installed_root: Path, mapping_file: Path):
+def build_sbom(installed_root: Path, mapping_file: Path, edit_mapping: bool = False):
     mapping = load_mapping(mapping_file)
     spdx_files = collect_spdx_files(installed_root)
 
@@ -140,6 +219,7 @@ def build_sbom(installed_root: Path, mapping_file: Path):
     bom = Bom()
     errors = []
     cpedict_entries, cpedict_by_product = load_cpedict_index(CPEDICT_CSV_PATH)
+    mapping_dirty = False
 
     for spdx_file in spdx_files:
         with spdx_file.open("r", encoding="utf-8") as f:
@@ -173,18 +253,26 @@ def build_sbom(installed_root: Path, mapping_file: Path):
             errors.append(f"{spdx_file}: missing version (SPDXRef-port)")
             continue
 
+        mapping_key = pkg_name.lower()
         mapping_name = lookup_name or pkg_name
         m = find_mapping_entry(mapping, mapping_name)
         if not m:
             suggestions = suggest_cpe_candidates(pkg_name, cpedict_entries, cpedict_by_product)
-            if suggestions:
-                formatted = ", ".join(f"{vendor}/{product}" for vendor, product in suggestions)
-                errors.append(
-                    f"Port {pkg_name} ({pkg_version}) missing in mapping.json (suggest: {formatted})"
-                )
-            else:
-                errors.append(f"Port {pkg_name} ({pkg_version}) missing in mapping.json")
-            continue
+            if edit_mapping:
+                entry = interactive_add_mapping(pkg_name, pkg_version, suggestions)
+                if entry:
+                    mapping[mapping_key] = entry
+                    m = entry
+                    mapping_dirty = True
+            if not m:
+                if suggestions:
+                    formatted = ", ".join(f"{vendor}/{product}" for vendor, product in suggestions)
+                    errors.append(
+                        f"Port {pkg_name} ({pkg_version}) missing in mapping.json (suggest: {formatted})"
+                    )
+                else:
+                    errors.append(f"Port {pkg_name} ({pkg_version}) missing in mapping.json")
+                continue
 
         cpe_value = render_template(m.get("cpe", ""), pkg_name, pkg_version).strip()
         purl_value = render_template(m.get("purl", ""), pkg_name, pkg_version).strip()
@@ -209,6 +297,14 @@ def build_sbom(installed_root: Path, mapping_file: Path):
 
         bom.components.add(comp)
 
+    if edit_mapping and mapping_dirty:
+        try:
+            save_mapping(mapping_file, mapping)
+            print(f"[OK] Updated mapping file: {mapping_file}")
+        except OSError as exc:
+            print(f"[ERROR] Failed to update mapping file {mapping_file}: {exc}")
+            sys.exit(1)
+
     if errors:
         print("[ERROR] Missing mappings or invalid data:")
         for e in errors:
@@ -228,34 +324,6 @@ def build_sbom(installed_root: Path, mapping_file: Path):
     print("[OK] SBOM written: sbom.cyclonedx.json and sbom.cyclonedx.xml")
 
 
-def audit_ports(vcpkg_root: Path, mapping_file: Path):
-    mapping = load_mapping(mapping_file)
-    ports_dir = vcpkg_root / "ports"
-
-    if not ports_dir.exists():
-        print(f"[ERROR] Ports directory not found: {ports_dir}", file=sys.stderr)
-        sys.exit(1)
-
-    report = []
-    cpedict_entries, cpedict_by_product = load_cpedict_index(CPEDICT_CSV_PATH)
-    for port_dir in sorted(ports_dir.iterdir()):
-        if not port_dir.is_dir():
-            continue
-        name = port_dir.name
-        has_mapping = find_mapping_entry(mapping, name) is not None
-        entry = {"port": name, "mapped": has_mapping}
-        if not has_mapping:
-            suggestions = suggest_cpe_candidates(name, cpedict_entries, cpedict_by_product)
-            if suggestions:
-                entry["suggestions"] = [f"{vendor}/{product}" for vendor, product in suggestions]
-        report.append(entry)
-
-    with open("mapping_audit.json", "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2)
-
-    print(f"[OK] Audit complete: mapping_audit.json (total {len(report)} ports)")
-
-
 def main():
     parser = argparse.ArgumentParser(prog="vcpkg-cyclonedx-cpe-purl")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -263,17 +331,16 @@ def main():
     build_p = subparsers.add_parser("build", help="Generate CycloneDX SBOM")
     build_p.add_argument("installed_root", type=Path)
     build_p.add_argument("--mapping", type=Path, default=Path("mapping.json"))
-
-    audit_p = subparsers.add_parser("audit", help="Audit ports mapping coverage")
-    audit_p.add_argument("vcpkg_root", type=Path)
-    audit_p.add_argument("--mapping", type=Path, default=Path("mapping.json"))
+    build_p.add_argument(
+        "--edit-mapping",
+        action="store_true",
+        help="Interactively add missing mapping entries during the build run",
+    )
 
     args = parser.parse_args()
 
     if args.command == "build":
-        build_sbom(args.installed_root, args.mapping)
-    elif args.command == "audit":
-        audit_ports(args.vcpkg_root, args.mapping)
+        build_sbom(args.installed_root, args.mapping, edit_mapping=args.edit_mapping)
 
 
 if __name__ == "__main__":

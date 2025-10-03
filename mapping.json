@@ -302,5 +302,17 @@
   "zstd": {
     "cpe": "cpe:2.3:a:facebook:zstandard:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
+  },
+  "pdfium": {
+    "cpe": "cpe:2.3:a:google:pdfium:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "pcre2": {
+    "cpe": "cpe:2.3:a:pcre:pcre2:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libevent": {
+    "cpe": "cpe:2.3:a:libevent_project:libevent:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
   }
 }
