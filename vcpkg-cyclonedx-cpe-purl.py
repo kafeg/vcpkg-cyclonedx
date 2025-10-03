@@ -47,11 +47,13 @@ def render_template(
     pkg_version: str,
     *,
     port_override: Optional[str] = None,
+    version_override: Optional[str] = None,
 ) -> str:
+    version_value = pkg_version if version_override is None else version_override
     port_value = pkg_name if port_override is None else port_override
     return (
         template
-        .replace("{version}", pkg_version)
+        .replace("{version}", version_value)
         .replace("{port}", port_value)
     )
 
@@ -111,6 +113,15 @@ def choose_cpe_product(
             return vendor_products[candidate]
 
     return port_name
+
+
+def strip_port_version(version: str) -> str:
+    if not version:
+        return version
+    split_index = version.find("#")
+    if split_index == -1:
+        return version
+    return version[:split_index]
 
 
 def render_cpe_value(
@@ -353,7 +364,14 @@ def build_sbom(
             continue
 
         pkg_name_raw = port_package.get("name")
-        pkg_version = port_package.get("versionInfo")
+        pkg_version_value = port_package.get("versionInfo")
+
+        if isinstance(pkg_version_value, str):
+            pkg_version_value = pkg_version_value.strip()
+        else:
+            pkg_version_value = None
+
+        pkg_version_raw = pkg_version_value
 
         if isinstance(pkg_name_raw, str):
             pkg_name = pkg_name_raw.strip()
@@ -366,14 +384,19 @@ def build_sbom(
             errors.append(f"{spdx_file}: missing port name (SPDXRef-port)")
             continue
 
-        if not pkg_version and isinstance(spdx.get("name"), str):
+        if not pkg_version_raw and isinstance(spdx.get("name"), str):
             doc_name = spdx["name"].split("@", 1)
             if len(doc_name) == 2:
-                pkg_version = doc_name[1].split()[0]
+                derived_version = doc_name[1].split()[0]
+                pkg_version_raw = derived_version.strip()
 
-        if not pkg_version:
+        if not pkg_version_raw:
             errors.append(f"{spdx_file}: missing version (SPDXRef-port)")
             continue
+
+        upstream_version = strip_port_version(pkg_version_raw)
+        if not upstream_version:
+            upstream_version = pkg_version_raw
 
         mapping_key = pkg_name.lower()
         mapping_name = lookup_name or pkg_name
@@ -381,7 +404,7 @@ def build_sbom(
         if not m:
             suggestions = suggest_cpe_candidates(pkg_name, cpedict_entries, cpedict_by_product)
             if edit_mapping:
-                entry = interactive_add_mapping(pkg_name, pkg_version, suggestions)
+                entry = interactive_add_mapping(pkg_name, pkg_version_raw, suggestions)
                 if entry:
                     mapping[mapping_key] = entry
                     m = entry
@@ -394,16 +417,16 @@ def build_sbom(
                 if suggestions:
                     formatted = ", ".join(f"{vendor}/{product}" for vendor, product in suggestions)
                     errors.append(
-                        f"Port {pkg_name} ({pkg_version}) missing in mapping.json (suggest: {formatted})"
+                        f"Port {pkg_name} ({pkg_version_raw}) missing in mapping.json (suggest: {formatted})"
                     )
                 else:
-                    errors.append(f"Port {pkg_name} ({pkg_version}) missing in mapping.json")
+                    errors.append(f"Port {pkg_name} ({pkg_version_raw}) missing in mapping.json")
                 continue
 
         cpe_value, canonical_product = render_cpe_value(
             m.get("cpe", ""),
             pkg_name,
-            pkg_version,
+            upstream_version,
             matched_pattern,
             cpedict_by_vendor,
         )
@@ -412,7 +435,7 @@ def build_sbom(
         purl_value = render_template(
             m.get("purl", ""),
             pkg_name,
-            pkg_version,
+            upstream_version,
             port_override=port_override,
         ).strip()
 
@@ -428,7 +451,7 @@ def build_sbom(
 
         comp = Component(
             name=pkg_name,
-            version=pkg_version,
+            version=upstream_version,
             type=ComponentType.LIBRARY,
             purl=purl_obj,
             cpe=cpe_value
