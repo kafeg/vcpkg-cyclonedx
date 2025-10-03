@@ -1,0 +1,3 @@
+[submodule "cpedict"]
+	path = cpedict
+	url = https://github.com/tiiuae/cpedict.git

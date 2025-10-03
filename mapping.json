@@ -1,0 +1,306 @@
+{
+  "abseil": {
+    "cpe": "cpe:2.3:a:abseil:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "boost-*": {
+    "cpe": "cpe:2.3:a:boost:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "brotli": {
+    "cpe": "cpe:2.3:a:google:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "bzip2": {
+    "cpe": "cpe:2.3:a:bzip:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "catch2": {
+    "cpe": "cpe:2.3:a:catch:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "charls": {
+    "cpe": "cpe:2.3:a:charls:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "dbus": {
+    "cpe": "cpe:2.3:a:freedesktop:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "dcmtk": {
+    "cpe": "cpe:2.3:a:offis:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "dirent": {
+    "cpe": "cpe:2.3:a:dirent_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "double-conversion": {
+    "cpe": "cpe:2.3:a:google:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "egl": {
+    "cpe": "cpe:2.3:a:khronos:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "egl-registry": {
+    "cpe": "cpe:2.3:a:khronos:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "expat": {
+    "cpe": "cpe:2.3:a:libexpat_project:libexpat:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "ffmpeg": {
+    "cpe": "cpe:2.3:a:ffmpeg:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "fontconfig": {
+    "cpe": "cpe:2.3:a:fontconfig_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "freetype": {
+    "cpe": "cpe:2.3:a:freetype:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "freeglut": {
+    "cpe": "cpe:2.3:a:freeglut:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "gperf": {
+    "cpe": "cpe:2.3:a:gnu:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "gettext": {
+    "cpe": "cpe:2.3:a:gnu:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "gettext-libintl": {
+    "cpe": "cpe:2.3:a:gnu:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "getopt": {
+    "cpe": "cpe:2.3:a:gnu:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "glew": {
+    "cpe": "cpe:2.3:a:glew_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "glib": {
+    "cpe": "cpe:2.3:a:gnome:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "harfbuzz": {
+    "cpe": "cpe:2.3:a:harfbuzz_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "icu": {
+    "cpe": "cpe:2.3:a:icu-project:international_components_for_unicode:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "jasper": {
+    "cpe": "cpe:2.3:a:jasper_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "lcms": {
+    "cpe": "cpe:2.3:a:lcms_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libb2": {
+    "cpe": "cpe:2.3:a:libb2:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libcap": {
+    "cpe": "cpe:2.3:a:libcap_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libffi": {
+    "cpe": "cpe:2.3:a:libffi_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libiconv": {
+    "cpe": "cpe:2.3:a:gnu:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libjpeg-turbo": {
+    "cpe": "cpe:2.3:a:libjpeg-turbo:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "liblzma": {
+    "cpe": "cpe:2.3:a:tukaani:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libmount": {
+    "cpe": "cpe:2.3:a:libmount:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libpng": {
+    "cpe": "cpe:2.3:a:libpng:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libpq": {
+    "cpe": "cpe:2.3:a:supabase:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libsystemd": {
+    "cpe": "cpe:2.3:a:systemd_project:systemd:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libuuid": {
+    "cpe": "cpe:2.3:a:libuuid:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libvpx": {
+    "cpe": "cpe:2.3:a:webmproject:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libwebp": {
+    "cpe": "cpe:2.3:a:webmproject:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libx11": {
+    "cpe": "cpe:2.3:a:x.org:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libxau": {
+    "cpe": "cpe:2.3:a:x:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libxcrypt": {
+    "cpe": "cpe:2.3:a:libxcrypt:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libxdmcp": {
+    "cpe": "cpe:2.3:a:x.org:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libxext": {
+    "cpe": "cpe:2.3:a:x:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libxfixes": {
+    "cpe": "cpe:2.3:a:x.org:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libxi": {
+    "cpe": "cpe:2.3:a:x.org:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libxml2": {
+    "cpe": "cpe:2.3:a:xmlsoft:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libxslt": {
+    "cpe": "cpe:2.3:a:xmlsoft:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libxtst": {
+    "cpe": "cpe:2.3:a:x:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libxv": {
+    "cpe": "cpe:2.3:a:x.org:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "lz4": {
+    "cpe": "cpe:2.3:a:lz4_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "minizip": {
+    "cpe": "cpe:2.3:a:minizip_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "opengl": {
+    "cpe": "cpe:2.3:a:khronos:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "openjpeg": {
+    "cpe": "cpe:2.3:a:uclouvain:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "openssl": {
+    "cpe": "cpe:2.3:a:openssl:openssl:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:conan/openssl@{version}"
+  },
+  "opus": {
+    "cpe": "cpe:2.3:a:opus_codec:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "pkgconf": {
+    "cpe": "cpe:2.3:a:pkgconf:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "protobuf": {
+    "cpe": "cpe:2.3:a:google:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "pthread": {
+    "cpe": "cpe:2.3:a:x.org:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "pthread-stubs": {
+    "cpe": "cpe:2.3:a:x.org:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "qt*": {
+    "cpe": "cpe:2.3:a:qt:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "re2": {
+    "cpe": "cpe:2.3:a:google:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "replxx": {
+    "cpe": "cpe:2.3:a:replxx:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "snappy": {
+    "cpe": "cpe:2.3:a:google:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "sqlite3": {
+    "cpe": "cpe:2.3:a:sqlite:sqlite:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "tiff": {
+    "cpe": "cpe:2.3:a:libtiff:libtiff:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "utf8-range": {
+    "cpe": "cpe:2.3:a:golang:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "vcpkg-*": {
+    "cpe": "cpe:2.3:a:microsoft:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "virtualgl": {
+    "cpe": "cpe:2.3:a:virtualgl:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "xcb": {
+    "cpe": "cpe:2.3:a:x:libxcb:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "xorg-macros": {
+    "cpe": "cpe:2.3:a:x.org:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "xproto": {
+    "cpe": "cpe:2.3:a:x.org:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "xtrans": {
+    "cpe": "cpe:2.3:a:x:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "zlib": {
+    "cpe": "cpe:2.3:a:zlib:zlib:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "zstd": {
+    "cpe": "cpe:2.3:a:facebook:zstandard:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  }
+}
