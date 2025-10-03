@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 import argparse
+import csv
 import json
 import sys
+from collections import defaultdict
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 from cyclonedx.model.bom import Bom
 from cyclonedx.model.component import Component, ComponentType
 from cyclonedx.output import OutputFormat, make_outputter
 from cyclonedx.schema import SchemaVersion
 from packageurl import PackageURL
+
+
+CPEDICT_CSV_PATH = Path(__file__).resolve().parent / "cpedict" / "data" / "cpes.csv"
 
 
 def load_mapping(path: Path) -> dict:
@@ -44,6 +49,73 @@ def render_template(template: str, pkg_name: str, pkg_version: str) -> str:
     )
 
 
+def load_cpedict_index(csv_path: Path) -> Tuple[List[Tuple[str, str]], Dict[str, List[Tuple[str, str]]]]:
+    entries: List[Tuple[str, str]] = []
+    by_product: Dict[str, List[Tuple[str, str]]] = defaultdict(list)
+
+    if not csv_path.exists():
+        return entries, by_product
+
+    with csv_path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            vendor = (row.get("vendor") or "").strip()
+            product = (row.get("product") or "").strip()
+            if not vendor or not product:
+                continue
+            entry = (vendor, product)
+            entries.append(entry)
+            by_product[product.lower()].append(entry)
+
+    return entries, by_product
+
+
+def suggest_cpe_candidates(
+    port_name: str,
+    entries: List[Tuple[str, str]],
+    by_product: Dict[str, List[Tuple[str, str]]],
+    limit: int = 3,
+) -> List[Tuple[str, str]]:
+    if not port_name:
+        return []
+
+    port_lower = port_name.lower()
+    normalized = port_lower.replace("-", "_")
+
+    suggestions: List[Tuple[str, str]] = []
+    seen = set()
+
+    def add_candidates(items: List[Tuple[str, str]]):
+        for candidate in items:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            suggestions.append(candidate)
+            if len(suggestions) >= limit:
+                return True
+        return False
+
+    exact = by_product.get(port_lower, [])
+    if add_candidates(exact):
+        return suggestions
+
+    alt = by_product.get(normalized, [])
+    if add_candidates(alt):
+        return suggestions
+
+    partial_matches: List[Tuple[str, str]] = []
+    for vendor, product in entries:
+        product_lower = product.lower()
+        if port_lower in product_lower:
+            partial_matches.append((vendor, product))
+            continue
+        if product_lower in port_lower and len(product_lower) >= 4:
+            partial_matches.append((vendor, product))
+
+    add_candidates(partial_matches)
+    return suggestions
+
+
 def extract_port_package(spdx_doc: dict) -> Optional[dict]:
     packages = spdx_doc.get("packages")
     if not isinstance(packages, list):
@@ -67,6 +139,7 @@ def build_sbom(installed_root: Path, mapping_file: Path):
 
     bom = Bom()
     errors = []
+    cpedict_entries, cpedict_by_product = load_cpedict_index(CPEDICT_CSV_PATH)
 
     for spdx_file in spdx_files:
         with spdx_file.open("r", encoding="utf-8") as f:
@@ -103,7 +176,14 @@ def build_sbom(installed_root: Path, mapping_file: Path):
         mapping_name = lookup_name or pkg_name
         m = find_mapping_entry(mapping, mapping_name)
         if not m:
-            errors.append(f"Port {pkg_name} ({pkg_version}) missing in mapping.json")
+            suggestions = suggest_cpe_candidates(pkg_name, cpedict_entries, cpedict_by_product)
+            if suggestions:
+                formatted = ", ".join(f"{vendor}/{product}" for vendor, product in suggestions)
+                errors.append(
+                    f"Port {pkg_name} ({pkg_version}) missing in mapping.json (suggest: {formatted})"
+                )
+            else:
+                errors.append(f"Port {pkg_name} ({pkg_version}) missing in mapping.json")
             continue
 
         cpe_value = render_template(m.get("cpe", ""), pkg_name, pkg_version).strip()
@@ -157,12 +237,18 @@ def audit_ports(vcpkg_root: Path, mapping_file: Path):
         sys.exit(1)
 
     report = []
+    cpedict_entries, cpedict_by_product = load_cpedict_index(CPEDICT_CSV_PATH)
     for port_dir in sorted(ports_dir.iterdir()):
         if not port_dir.is_dir():
             continue
         name = port_dir.name
         has_mapping = find_mapping_entry(mapping, name) is not None
-        report.append({"port": name, "mapped": has_mapping})
+        entry = {"port": name, "mapped": has_mapping}
+        if not has_mapping:
+            suggestions = suggest_cpe_candidates(name, cpedict_entries, cpedict_by_product)
+            if suggestions:
+                entry["suggestions"] = [f"{vendor}/{product}" for vendor, product in suggestions]
+        report.append(entry)
 
     with open("mapping_audit.json", "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
