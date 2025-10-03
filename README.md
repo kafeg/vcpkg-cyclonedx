@@ -15,6 +15,13 @@ This repository provides a thin wrapper around `vcpkg` SPDX metadata so that you
    ```
 3. On success the script writes `sbom.cyclonedx.json` and `sbom.cyclonedx.xml` to the current directory. If any port lacks a mapping you will receive an error list with suggested CPE candidates sourced from `cpedict/data/cpes.csv`.
 
+### Skip missing mode
+Set `--skip-missing` to generate an SBOM even when some ports do not yet have mappings. Missing ports are reported as warnings and omitted from the output:
+```bash
+python3 vcpkg-cyclonedx-cpe-purl.py build /path/to/vcpkg/installed \
+  --mapping mapping.json --skip-missing
+```
+
 ### Interactive edit mode
 The `--edit-mapping` flag lets you curate `mapping.json` during the build. Whenever the script encounters an unmapped port it:
 - Shows up to three vendor/product suggestions from the bundled CPE dictionary

@@ -208,7 +208,12 @@ def extract_port_package(spdx_doc: dict) -> Optional[dict]:
     return None
 
 
-def build_sbom(installed_root: Path, mapping_file: Path, edit_mapping: bool = False):
+def build_sbom(
+    installed_root: Path,
+    mapping_file: Path,
+    edit_mapping: bool = False,
+    skip_missing: bool = False,
+):
     mapping = load_mapping(mapping_file)
     spdx_files = collect_spdx_files(installed_root)
 
@@ -218,6 +223,7 @@ def build_sbom(installed_root: Path, mapping_file: Path, edit_mapping: bool = Fa
 
     bom = Bom()
     errors = []
+    skipped = []
     cpedict_entries, cpedict_by_product = load_cpedict_index(CPEDICT_CSV_PATH)
     mapping_dirty = False
 
@@ -265,6 +271,9 @@ def build_sbom(installed_root: Path, mapping_file: Path, edit_mapping: bool = Fa
                     m = entry
                     mapping_dirty = True
             if not m:
+                if skip_missing:
+                    skipped.append(pkg_name)
+                    continue
                 if suggestions:
                     formatted = ", ".join(f"{vendor}/{product}" for vendor, product in suggestions)
                     errors.append(
@@ -305,6 +314,10 @@ def build_sbom(installed_root: Path, mapping_file: Path, edit_mapping: bool = Fa
             print(f"[ERROR] Failed to update mapping file {mapping_file}: {exc}")
             sys.exit(1)
 
+    if skipped:
+        skipped_list = ", ".join(sorted(skipped))
+        print(f"[WARN] Skipped ports without mappings: {skipped_list}")
+
     if errors:
         print("[ERROR] Missing mappings or invalid data:")
         for e in errors:
@@ -336,11 +349,21 @@ def main():
         action="store_true",
         help="Interactively add missing mapping entries during the build run",
     )
+    build_p.add_argument(
+        "--skip-missing",
+        action="store_true",
+        help="Do not fail when mappings are missing; omit unmatched ports instead",
+    )
 
     args = parser.parse_args()
 
     if args.command == "build":
-        build_sbom(args.installed_root, args.mapping, edit_mapping=args.edit_mapping)
+        build_sbom(
+            args.installed_root,
+            args.mapping,
+            edit_mapping=args.edit_mapping,
+            skip_missing=args.skip_missing,
+        )
 
 
 if __name__ == "__main__":
