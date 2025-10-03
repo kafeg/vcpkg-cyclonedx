@@ -9,7 +9,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from cyclonedx.model.bom import Bom
+from cyclonedx.model.bom import Bom, BomMetaData
 from cyclonedx.model.component import Component, ComponentType
 from cyclonedx.model.contact import OrganizationalEntity
 from cyclonedx.model.license import DisjunctiveLicense, LicenseExpression
@@ -402,6 +402,16 @@ def build_sbom(
         sys.exit(1)
 
     bom = Bom()
+    metadata_supplier = OrganizationalEntity(name="vcpkg")
+    metadata_component = Component(
+        name=f"vcpkg-dependencies ({installed_root.name})",
+        type=ComponentType.APPLICATION,
+        description=f"CycloneDX SBOM for vcpkg installed tree at {installed_root}",
+    )
+    bom.metadata = BomMetaData(
+        supplier=metadata_supplier,
+        component=metadata_component,
+    )
     errors = []
     skipped = []
     cpedict_entries, cpedict_by_product, cpedict_by_vendor = load_cpedict_index(CPEDICT_CSV_PATH)
