@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Tuple
 
 from cyclonedx.model.bom import Bom
 from cyclonedx.model.component import Component, ComponentType
+from cyclonedx.model.contact import OrganizationalEntity
 from cyclonedx.model.license import DisjunctiveLicense, LicenseExpression
 from cyclonedx.output import OutputFormat, make_outputter
 from cyclonedx.schema import SchemaVersion
@@ -181,13 +182,14 @@ def render_cpe_value(
     pkg_version: str,
     matched_pattern: Optional[str],
     cpedict_by_vendor: Dict[str, Dict[str, str]],
-) -> Tuple[str, Optional[str]]:
+) -> Tuple[str, Optional[str], Optional[str]]:
     if not template:
-        return "", None
+        return "", None, None
 
     parts = template.split(":")
     if len(parts) != 13:
-        return render_template(template, pkg_name, pkg_version), None
+        rendered = render_template(template, pkg_name, pkg_version)
+        return rendered, None, None
 
     vendor_template = parts[3]
     product_template = parts[4]
@@ -213,7 +215,7 @@ def render_cpe_value(
             continue
         parts[idx] = render_template(value, pkg_name, pkg_version).strip()
 
-    return ":".join(parts), canonical_product
+    return ":".join(parts), canonical_product, vendor_value or None
 
 
 def load_cpedict_index(
@@ -474,7 +476,7 @@ def build_sbom(
                     errors.append(f"Port {pkg_name} ({pkg_version_raw}) missing in mapping.json")
                 continue
 
-        cpe_value, canonical_product = render_cpe_value(
+        cpe_value, canonical_product, cpe_vendor = render_cpe_value(
             m.get("cpe", ""),
             pkg_name,
             upstream_version,
@@ -503,6 +505,11 @@ def build_sbom(
         license_expression = extract_license_expression(port_package)
         licenses_arg = build_license_choices(license_expression)
 
+        supplier_entity = None
+        supplier_name = (cpe_vendor or "").strip()
+        if supplier_name:
+            supplier_entity = OrganizationalEntity(name=supplier_name)
+
         description_value = port_package.get("description")
         if isinstance(description_value, str):
             description_value = description_value.strip()
@@ -519,6 +526,7 @@ def build_sbom(
             cpe=cpe_value,
             licenses=licenses_arg,
             description=description_value,
+            supplier=supplier_entity,
         )
 
         bom.components.add(comp)
