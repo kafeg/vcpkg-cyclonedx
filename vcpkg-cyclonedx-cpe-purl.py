@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Tuple
 from cyclonedx.model.bom import Bom, BomMetaData, Property
 from cyclonedx.model.component import Component, ComponentType
 from cyclonedx.model.contact import OrganizationalEntity
+from cyclonedx.model.dependency import Dependency
 from cyclonedx.model.license import DisjunctiveLicense, LicenseExpression
 from cyclonedx.output import OutputFormat, make_outputter
 from cyclonedx.schema import SchemaVersion
@@ -446,6 +447,7 @@ def build_sbom(
     missing = []
     cpedict_entries, cpedict_by_product, cpedict_by_vendor = load_cpedict_index(CPEDICT_CSV_PATH)
     mapping_dirty = False
+    bom_components: List[Component] = []
 
     for spdx_file in spdx_files:
         with spdx_file.open("r", encoding="utf-8") as f:
@@ -589,6 +591,7 @@ def build_sbom(
         )
 
         bom.components.add(comp)
+        bom_components.append(comp)
 
     if edit_mapping and mapping_dirty:
         try:
@@ -607,6 +610,15 @@ def build_sbom(
         for e in errors:
             print("  - " + e)
         sys.exit(1)
+
+    metadata_component = bom.metadata.component if bom.metadata else None
+    if metadata_component and bom_components:
+        dependency_entries = [Dependency(ref=component.bom_ref) for component in bom_components]
+        if dependency_entries:
+            bom.dependencies.add(Dependency(
+                ref=metadata_component.bom_ref,
+                dependencies=dependency_entries,
+            ))
 
     # Write JSON
     json_writer = make_outputter(bom, OutputFormat.JSON, SchemaVersion.V1_4)
