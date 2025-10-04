@@ -7,7 +7,7 @@ import sys
 from collections import defaultdict
 from fnmatch import fnmatch
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from cyclonedx.model.bom import Bom, BomMetaData, Property
 from cyclonedx.model.component import Component, ComponentType
@@ -19,7 +19,9 @@ from cyclonedx.schema import SchemaVersion
 from packageurl import PackageURL
 
 
-CPEDICT_CSV_PATH = Path(__file__).resolve().parent / "cpedict" / "data" / "cpes.csv"
+SCRIPT_DIR = Path(__file__).resolve().parent
+CPEDICT_CSV_PATH = SCRIPT_DIR / "cpedict" / "data" / "cpes.csv"
+DEFAULT_MAPPING_PATH = SCRIPT_DIR / "mapping.json"
 
 ANSI_RESET = "\033[0m"
 STATUS_COLORS = {
@@ -424,8 +426,10 @@ def build_sbom(
     installed_root: Path,
     mapping_file: Path,
     edit_mapping: bool = False,
-    ignore_missing: bool = False,
+    ignore_missing_ports: Optional[Set[str]] = None,
 ):
+    mapping_file = mapping_file.resolve()
+    log_status("INFO", f"Using mapping file: {mapping_file}")
     mapping = load_mapping(mapping_file)
     spdx_files = collect_spdx_files(installed_root)
 
@@ -449,6 +453,8 @@ def build_sbom(
     cpedict_entries, cpedict_by_product, cpedict_by_vendor = load_cpedict_index(CPEDICT_CSV_PATH)
     mapping_dirty = False
     bom_components: List[Component] = []
+
+    ignore_missing_ports = ignore_missing_ports or set()
 
     for spdx_file in spdx_files:
         with spdx_file.open("r", encoding="utf-8") as f:
@@ -508,17 +514,17 @@ def build_sbom(
                     matched_pattern = mapping_key
                     mapping_dirty = True
             if not m:
-                if ignore_missing:
+                if mapping_key in ignore_missing_ports:
                     missing.append(pkg_name)
                     mapping_missing = True
                 else:
                     if suggestions:
                         formatted = ", ".join(f"{vendor}/{product}" for vendor, product in suggestions)
                         errors.append(
-                            f"Port {pkg_name} ({pkg_version_raw}) missing in mapping.json (suggest: {formatted})"
+                            f"Port {pkg_name} ({upstream_version}) missing in mapping.json (suggest: {formatted})"
                         )
                     else:
-                        errors.append(f"Port {pkg_name} ({pkg_version_raw}) missing in mapping.json")
+                        errors.append(f"Port {pkg_name} ({upstream_version}) missing in mapping.json")
                     continue
 
         properties_list: List[Property] = []
@@ -552,7 +558,7 @@ def build_sbom(
             ).strip()
 
             if not cpe_value or not purl_value:
-                errors.append(f"Port {pkg_name} has incomplete mapping")
+                errors.append(f"Port {pkg_name} ({upstream_version}) has incomplete mapping")
                 continue
 
             try:
@@ -603,7 +609,7 @@ def build_sbom(
             sys.exit(1)
 
     if missing:
-        missing_list = ", ".join(sorted(missing))
+        missing_list = ", ".join(sorted(set(missing)))
         log_status("WARN", f"Ports without mappings included without CPE data: {missing_list}")
 
     if errors:
@@ -623,15 +629,15 @@ def build_sbom(
 
     # Write JSON
     json_writer = make_outputter(bom, OutputFormat.JSON, SchemaVersion.V1_4)
-    with open("sbom.cyclonedx.json", "w", encoding="utf-8") as f:
+    with open("sbom_vcpkg-cyclonedx.json", "w", encoding="utf-8") as f:
         f.write(json_writer.output_as_string())
 
     # Write XML
     xml_writer = make_outputter(bom, OutputFormat.XML, SchemaVersion.V1_4)
-    with open("sbom.cyclonedx.xml", "w", encoding="utf-8") as f:
+    with open("sbom_vcpkg-cyclonedx.xml", "w", encoding="utf-8") as f:
         f.write(xml_writer.output_as_string())
 
-    log_status("OK", "SBOM written: sbom.cyclonedx.json and sbom.cyclonedx.xml")
+    log_status("OK", "SBOM written: sbom_vcpkg-cyclonedx.json and sbom_vcpkg-cyclonedx.xml")
 
 
 def main():
@@ -640,32 +646,49 @@ def main():
 
     build_p = subparsers.add_parser("build", help="Generate CycloneDX SBOM")
     build_p.add_argument("installed_root", type=Path)
-    build_p.add_argument("--mapping", type=Path, default=Path("mapping.json"))
+    build_p.add_argument(
+        "--mapping",
+        type=Path,
+        nargs="?",
+        default=None,
+        const=DEFAULT_MAPPING_PATH,
+        help=(
+            "Optional mapping file path; defaults to mapping.json located next to the script. "
+            "Provide without a value to use the default explicitly."
+        ),
+    )
     build_p.add_argument(
         "--edit-mapping",
         action="store_true",
         help="Interactively add missing mapping entries during the build run",
     )
     build_p.add_argument(
-        "--ignore-missing",
-        action="store_true",
-        help="Do not fail when mappings are missing; include unmatched ports without CPE",
+        "--ignore-missing-cpe",
+        metavar="PORTS",
+        action="append",
+        default=[],
+        help=(
+            "Comma-separated list of ports to include without mapping; "
+            "may be specified multiple times"
+        ),
     )
-    build_p.add_argument(
-        "--skip-missing",
-        dest="ignore_missing",
-        action="store_true",
-        help=argparse.SUPPRESS,
-    )
-
     args = parser.parse_args()
 
     if args.command == "build":
+        ignore_missing_cpe: Set[str] = set()
+        for entry in args.ignore_missing_cpe:
+            for value in entry.split(","):
+                cleaned = value.strip().lower()
+                if cleaned:
+                    ignore_missing_cpe.add(cleaned)
+
+        mapping_file = args.mapping if args.mapping else DEFAULT_MAPPING_PATH
+
         build_sbom(
             args.installed_root,
-            args.mapping,
+            mapping_file,
             edit_mapping=args.edit_mapping,
-            ignore_missing=args.ignore_missing,
+            ignore_missing_ports=ignore_missing_cpe,
         )
 
 
