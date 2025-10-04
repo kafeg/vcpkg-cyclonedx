@@ -1,8 +1,6 @@
 ## vcpkg CycloneDX CPE/PURL helper
 
-This repository provides a thin wrapper around `vcpkg` SPDX metadata so that you can emit CycloneDX SBOMs enriched with CPEs and Package URLs.
-It is inspired and based on https://github.com/microsoft/vcpkg/discussions/40700
-This is temporary solution, until vcpkg will have native CycloneDX/CPE/PURL integration.
+This repository provides a thin wrapper around `vcpkg` SPDX metadata so that you can emit CycloneDX SBOMs enriched with CPEs and Package URLs. It is inspired and based on https://github.com/microsoft/vcpkg/discussions/40700. This is temporary solution, until vcpkg will have native CycloneDX/CPE/PURL integration.
 
 ### Prerequisites
 - Python 3.9 or newer
