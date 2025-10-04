@@ -331,6 +331,10 @@
     "cpe": "cpe:2.3:a:libzip:libzip:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
   },
+  "mesa": {
+    "cpe": "cpe:2.3:a:mesa3d:mesa:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
   "msgpack": {
     "cpe": "cpe:2.3:a:msgpack:msgpack:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
