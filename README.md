@@ -14,14 +14,17 @@ This repository provides a thin wrapper around `vcpkg` SPDX metadata so that you
    python3 vcpkg-cyclonedx.py build /path/to/vcpkg/installed --mapping mapping.json
    ```
    The `--mapping` flag is optional; omit it—or pass it without a value—to use the bundled mapping file.
-3. On success the script writes `sbom.cyclonedx.json` and `sbom.cyclonedx.xml` to the current directory. If any port lacks a mapping you will receive an error list with suggested CPE candidates sourced from `cpedict/data/cpes.csv`. Status prefixes such as `[OK]`, `[WARN]`, and `[ERROR]` are colorized when the output stream supports ANSI colors. Version numbers shown in logs and used for template substitution drop any build metadata that follows a `#`.
+3. On success the script writes `sbom_vcpkg-cyclonedx.json` and `sbom_vcpkg-cyclonedx.xml` to the current directory. If any port lacks a mapping you will receive an error list with suggested CPE candidates sourced from `cpedict/data/cpes.csv`. Status prefixes such as `[OK]`, `[WARN]`, and `[ERROR]` are colorized when the output stream supports ANSI colors. Version numbers shown in logs and used for template substitution drop any build metadata that follows a `#`.
 
 ### Selectively include unmapped ports
 Use `--ignore-missing-cpe` when you want to finish the build while keeping specific unmapped ports in the SBOM. The flag accepts a comma-separated list and can be repeated; each value is matched against the lowercase port name. Unmapped ports are emitted with fallback Package URLs, component properties marking the missing CPE data, and a consolidated warning so you can track remaining gaps.
 ```bash
-python3 vcpkg-cyclonedx.py build /path/to/vcpkg/installed \
-  --mapping mapping.json --ignore-missing-cpe brotli,zlib
+python3 vcpkg-cyclonedx.py build /path/to/vcpkg/installed --mapping mapping.json --ignore-missing-cpe brotli,zlib
 ```
+
+Some vcpkg ports (for example, OpenGL-Registry, vcpkg-cmake, or other meta/helper packages) do not exist in the official CPE dictionary.
+This is expected — the CPE database only includes software products that are recognized as standalone, vendor-maintained deliverables with potential CVE records.
+Specification files, build helpers, or header-only libraries are typically not listed.
 
 ### Interactive edit mode
 The `--edit-mapping` flag lets you curate `mapping.json` during the build. Whenever the script encounters an unmapped port it:
