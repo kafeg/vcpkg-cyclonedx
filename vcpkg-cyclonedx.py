@@ -634,7 +634,7 @@ def build_sbom(
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="vcpkg-cyclonedx-cpe-purl")
+    parser = argparse.ArgumentParser(prog="vcpkg-cyclonedx")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     build_p = subparsers.add_parser("build", help="Generate CycloneDX SBOM")
