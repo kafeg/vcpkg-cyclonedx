@@ -30,8 +30,33 @@ The `--edit-mapping` flag lets you curate `mapping.json` during the build. Whene
 
 Example session:
 ```bash
-python3 vcpkg-cyclonedx.py build /path/to/vcpkg/installed \
-  --mapping mapping.json --edit-mapping
+python3 vcpkg-cyclonedx.py build /path/to/vcpkg/installed --mapping mapping.json --edit-mapping
+...
+[EDIT] Port libzip (1.11.3) missing in mapping.json.
+[EDIT] Suggested CPE vendor/product pairs:
+  1) libzip/libzip
+  2) nih/libzip
+  3) libzip2/libzip2
+Select option number or enter command ([s]kip, [c]ustom, [q]uit): 1
+[OK] Selected mapping libzip/libzip for libzip.
+[OK] Updated mapping file: mapping.json
+```
+
+If there are no suggested suitable suggested variants, use https://nvd.nist.gov/products/cpe/search for search port name and select and fill 'custom' option, like in example below:
+
+```
+python3 vcpkg-cyclonedx.py build ../qclauncher/vcpkg/installed --mapping mapping.json --edit-mapping
+[EDIT] Port msgpack (7.0.0) missing in mapping.json.
+[EDIT] Suggested CPE vendor/product pairs:
+  1) gpac/gpac
+  2) gpac_project/gpac
+  3) kriszyp/msgpackr
+Select option number or enter command ([s]kip, [c]ustom, [q]uit): c
+  Vendor (CPE party): msgpack
+  Product (CPE component): msgpack
+  PURL template [pkg:generic/{port}@{version}]: 
+[OK] Added custom mapping msgpack/msgpack for msgpack.
+[OK] Updated mapping file: mapping.json
 ```
 
 ### Mapping format
@@ -48,7 +73,4 @@ For example:
 ```
 
 ### Updating the CPE dictionary
-The `cpedict/update-cpedict.sh` helper refreshes the upstream CPE vendor/product list. Run it before large mapping updates so suggestions stay current:
-```bash
-bash cpedict/update-cpedict.sh
-```
+Just update submodule. This is usually no need to do, as it is service level.

@@ -314,5 +314,25 @@
   "libevent": {
     "cpe": "cpe:2.3:a:libevent_project:libevent:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
+  },
+  "autobahn": {
+    "cpe": "cpe:2.3:a:crossbar:autobahn:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "websocketpp": {
+    "cpe": "cpe:2.3:a:zaphoyd:websocketpp:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "curl": {
+    "cpe": "cpe:2.3:a:curl_project:curl:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libzip": {
+    "cpe": "cpe:2.3:a:libzip:libzip:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "msgpack": {
+    "cpe": "cpe:2.3:a:msgpack:msgpack:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
   }
 }
