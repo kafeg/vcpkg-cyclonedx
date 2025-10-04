@@ -4,17 +4,18 @@ This repository provides a thin wrapper around `vcpkg` SPDX metadata so that you
 
 ### Prerequisites
 - Python 3.9 or newer
-- `cyclonedx-python-lib` installed in the active environment (`python3 -m pip install cyclonedx-python-lib`)
 - A populated `vcpkg` installation tree that includes `share/<port>/vcpkg.spdx.json` files
+- Dependencies from `requirements.txt` installed in the active environment (`python3 -m pip install -r requirements.txt`)
 
 ### Basic usage
-1. Populate or update `mapping.json` with the CPE and PURL templates you want to use (the script automatically looks for `mapping.json` next to `vcpkg-cyclonedx.py`).
-2. Run the CLI in build mode:
+1. Install or update the Python dependencies: `python3 -m pip install -r requirements.txt`.
+2. Populate or update `mapping.json` with the CPE and PURL templates you want to use (the script automatically looks for `mapping.json` next to `vcpkg-cyclonedx.py`).
+3. Run the CLI in build mode:
    ```bash
    python3 vcpkg-cyclonedx.py build /path/to/vcpkg/installed --mapping mapping.json
    ```
    The `--mapping` flag is optional; omit it—or pass it without a value—to use the bundled mapping file.
-3. On success the script writes `sbom_vcpkg-cyclonedx.json` and `sbom_vcpkg-cyclonedx.xml` to the current directory. If any port lacks a mapping you will receive an error list with suggested CPE candidates sourced from `cpedict/data/cpes.csv`. Status prefixes such as `[OK]`, `[WARN]`, and `[ERROR]` are colorized when the output stream supports ANSI colors. Version numbers shown in logs and used for template substitution drop any build metadata that follows a `#`.
+4. On success the script writes `sbom_vcpkg-cyclonedx.json` and `sbom_vcpkg-cyclonedx.xml` to the current directory. If any port lacks a mapping you will receive an error list with suggested CPE candidates sourced from `cpedict/data/cpes.csv`. Status prefixes such as `[OK]`, `[WARN]`, and `[ERROR]` are colorized when the output stream supports ANSI colors. Version numbers shown in logs and used for template substitution drop any build metadata that follows a `#`.
 
 ### Selectively include unmapped ports
 Use `--ignore-missing-cpe` when you want to finish the build while keeping specific unmapped ports in the SBOM. The flag accepts a comma-separated list and can be repeated; each value is matched against the lowercase port name. Unmapped ports are emitted with fallback Package URLs, component properties marking the missing CPE data, and a consolidated warning so you can track remaining gaps.
