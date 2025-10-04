@@ -342,7 +342,8 @@ def interactive_add_mapping(
     pkg_version: str,
     suggestions: List[Tuple[str, str]],
 ) -> Optional[dict]:
-    print(f"[EDIT] Port {pkg_name} ({pkg_version}) missing in mapping.json.")
+    display_version = strip_port_version(pkg_version) or pkg_version
+    print(f"[EDIT] Port {pkg_name} ({display_version}) missing in mapping.json.")
 
     if suggestions:
         print("[EDIT] Suggested CPE vendor/product pairs:")
