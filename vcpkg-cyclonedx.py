@@ -439,10 +439,13 @@ def build_sbom(
 
     bom = Bom()
     metadata_supplier = OrganizationalEntity(name="vcpkg")
+    installed_label = installed_root.name or "installed"
+    metadata_bom_ref = f"vcpkg-dependencies-{installed_label}".replace(" ", "-")
     metadata_component = Component(
-        name=f"vcpkg-dependencies ({installed_root.name})",
+        name=f"vcpkg-dependencies ({installed_label})",
         type=ComponentType.APPLICATION,
         description=f"CycloneDX SBOM for vcpkg installed tree at {installed_root}",
+        bom_ref=metadata_bom_ref,
     )
     bom.metadata = BomMetaData(
         supplier=metadata_supplier,
@@ -585,10 +588,12 @@ def build_sbom(
 
         component_properties = properties_list if properties_list else None
 
+        component_ref = str(purl_obj)
         comp = Component(
             name=pkg_name,
             version=upstream_version,
             type=ComponentType.LIBRARY,
+            bom_ref=component_ref,
             purl=purl_obj,
             cpe=cpe_value,
             licenses=licenses_arg,
@@ -620,7 +625,11 @@ def build_sbom(
 
     metadata_component = bom.metadata.component if bom.metadata else None
     if metadata_component and bom_components:
-        dependency_entries = [Dependency(ref=component.bom_ref) for component in bom_components]
+        dependency_entries = [
+            Dependency(ref=component.bom_ref)
+            for component in bom_components
+            if component.bom_ref is not None
+        ]
         if dependency_entries:
             bom.dependencies.add(Dependency(
                 ref=metadata_component.bom_ref,
