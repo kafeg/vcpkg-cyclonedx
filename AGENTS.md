@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-The CLI entry point is `vcpkg-cyclonedx-cpe-purl.py`; it consumes `mapping.json` and emits `sbom.cyclonedx.json` and `.xml`, surfacing missing mapping details inline (errors by default, warnings with `--ignore-missing`). `cpedict/` provides the authoritative CPE vendor/product dictionary, refreshed via `cpedict/update-cpedict.sh` and bundled with SPDX licensing notices. Keep large generated outputs and experimental notebooks out of version control; store only curated mapping updates and scripts.
+The CLI entry point is `vcpkg-cyclonedx.py`; it consumes `mapping.json` and emits `sbom.cyclonedx.json` and `.xml`, surfacing missing mapping details inline (errors by default, warnings with `--ignore-missing`). `cpedict/` provides the authoritative CPE vendor/product dictionary, refreshed via `cpedict/update-cpedict.sh` and bundled with SPDX licensing notices. Keep large generated outputs and experimental notebooks out of version control; store only curated mapping updates and scripts.
 
 ### Reference Script Policy
 - Treat `sample-script.py` as the canonical reference implementation for contributor workflows.
@@ -9,8 +9,8 @@ The CLI entry point is `vcpkg-cyclonedx-cpe-purl.py`; it consumes `mapping.json`
 
 ## Build, Test, and Development Commands
 - `python3 -m pip install cyclonedx-python-lib`: installs the only runtime dependency used by the CLI.
-- `python3 vcpkg-cyclonedx-cpe-purl.py build <path-to-vcpkg/installed> --mapping mapping.json`: generates CycloneDX SBOM files and fails fast when mappings are missing; point to the vcpkg `installed/` tree for your triplet.
-- `python3 vcpkg-cyclonedx-cpe-purl.py build <path-to-vcpkg/installed> --mapping mapping.json --ignore-missing`: produces SBOM outputs while keeping unmapped ports (marked with warning logs and fallback metadata) so you can review gaps without aborting the run.
+- `python3 vcpkg-cyclonedx.py build <path-to-vcpkg/installed> --mapping mapping.json`: generates CycloneDX SBOM files and fails fast when mappings are missing; point to the vcpkg `installed/` tree for your triplet.
+- `python3 vcpkg-cyclonedx.py build <path-to-vcpkg/installed> --mapping mapping.json --ignore-missing`: produces SBOM outputs while keeping unmapped ports (marked with warning logs and fallback metadata) so you can review gaps without aborting the run.
 - `bash cpedict/update-cpedict.sh`: pulls the latest upstream CPE dictionary; re-run before large mapping refreshes.
 
 ## Coding Style & Naming Conventions
