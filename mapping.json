@@ -327,6 +327,18 @@
     "cpe": "cpe:2.3:a:curl_project:curl:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
   },
+  "libssh": {
+    "cpe": "cpe:2.3:a:libssh:libssh:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libtomcrypt": {
+    "cpe": "cpe:2.3:a:libtom:libtomcrypt:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "libtommath": {
+    "cpe": "cpe:2.3:a:libtom:libtommath:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
   "libzip": {
     "cpe": "cpe:2.3:a:libzip:libzip:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
