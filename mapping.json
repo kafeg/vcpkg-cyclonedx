@@ -339,6 +339,10 @@
     "cpe": "cpe:2.3:a:msgpack:msgpack:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
   },
+  "openh264": {
+    "cpe": "cpe:2.3:a:cisco:openh264:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
   "pthreads": {
     "cpe": "cpe:2.3:a:pthread-win32_project:pthreads-win32:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
