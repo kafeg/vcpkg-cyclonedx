@@ -55,6 +55,10 @@
     "cpe": "cpe:2.3:a:ffmpeg:{port}:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
   },
+  "fltk": {
+    "cpe": "cpe:2.3:a:fltk_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
   "fontconfig": {
     "cpe": "cpe:2.3:a:fontconfig_project:{port}:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
@@ -229,6 +233,10 @@
   },
   "pkgconf": {
     "cpe": "cpe:2.3:a:pkgconf:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "poco": {
+    "cpe": "cpe:2.3:a:pocoproject:{port}:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
   },
   "protobuf": {
