@@ -15,6 +15,10 @@
     "cpe": "cpe:2.3:a:bzip:{port}:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
   },
+  "c-ares": {
+    "cpe": "cpe:2.3:a:c-ares:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
   "catch2": {
     "cpe": "cpe:2.3:a:catch:{port}:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
@@ -29,6 +33,10 @@
   },
   "dcmtk": {
     "cpe": "cpe:2.3:a:offis:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "date": {
+    "cpe": "cpe:2.3:a:date_project:{port}:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
   },
   "dirent": {
@@ -57,6 +65,10 @@
   },
   "fltk": {
     "cpe": "cpe:2.3:a:fltk_project:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "fmt": {
+    "cpe": "cpe:2.3:a:fmt:{port}:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
   },
   "fontconfig": {
@@ -93,6 +105,10 @@
   },
   "glib": {
     "cpe": "cpe:2.3:a:gnome:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "grpc": {
+    "cpe": "cpe:2.3:a:grpc:{port}:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
   },
   "harfbuzz": {
@@ -229,6 +245,10 @@
   },
   "opus": {
     "cpe": "cpe:2.3:a:opus_codec:{port}:{version}:*:*:*:*:*:*:*",
+    "purl": "pkg:generic/{port}@{version}"
+  },
+  "pcre": {
+    "cpe": "cpe:2.3:a:pcre:{port}:{version}:*:*:*:*:*:*:*",
     "purl": "pkg:generic/{port}@{version}"
   },
   "pkgconf": {
