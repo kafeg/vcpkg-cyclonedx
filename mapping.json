@@ -241,7 +241,7 @@
   },
   "openssl": {
     "cpe": "cpe:2.3:a:openssl:openssl:{version}:*:*:*:*:*:*:*",
-    "purl": "pkg:conan/openssl@{version}"
+    "purl": "pkg:generic/openssl@{version}"
   },
   "opus": {
     "cpe": "cpe:2.3:a:opus_codec:{port}:{version}:*:*:*:*:*:*:*",
